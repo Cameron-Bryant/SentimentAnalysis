@@ -1,0 +1,43 @@
+###Scrape, tokenize, clean, and save data as csv
+import requests
+from bs4 import BeautifulSoup
+import re
+import xlsxwriter
+import csv
+#decided on yelp reviews for loveland ski area
+#<span class=" raw__373c0__3rcx7" lang="en"></span>
+site = 'https://yelp.com/biz/loveland-ski-area-georgetown-2?osq=loveland+ski+area'
+
+page = requests.get(site)
+soup = BeautifulSoup(page.content, 'html.parser')
+
+def getData(s):#get the contents of the tag
+    tags = s.find_all("span", class_="raw__373c0__3rcx7")#change here for diff websites
+    data = [tag.text for tag in tags]
+    return data
+reviews = getData(soup)
+#tokens can be sentences or words, I choose words
+def tokenize(data):
+    tokens = []
+    for dp in data:
+        tokens.append(dp.split(' '))
+    return tokens
+tokenized_reviews = tokenize(reviews)
+print(tokenized_reviews)
+#theres some html and formatting trash in the tokens, so need to clean it
+def clean(tokens):
+    #trash in the tokens:> \ax0 (space)
+    space = '\xa0'
+    for i in range(len(tokens)):
+        for j in range(len(tokens[i])):
+                tokens[i][j] = re.sub(r'\xa0', ' ', tokens[i][j])
+    print(tokens)
+    return tokens
+clean_tokens = clean(tokenized_reviews)
+
+def saveTokens(tokens):#write tokens to csv for speed and ease of access. 
+    with open('tokens.csv', 'w', newline='') as file:
+        writer = csv.writer(file)
+        for i in range(len(tokens)):
+            writer.writerow(tokens[i])
+saveTokens(clean_tokens)
